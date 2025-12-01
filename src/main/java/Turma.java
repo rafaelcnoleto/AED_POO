@@ -8,20 +8,33 @@ public class Turma {
     private Professor professorResponsavel;
     private List<Aluno> alunosMatriculados;
 
-    public Turma(String codigoTurma, int anoLetivo, Disciplina disciplina, Professor prof) {
+    public Turma(String codigoTurma, int anoLetivo, Disciplina disciplina) {
         this.codigoTurma = codigoTurma;
         this.anoLetivo = anoLetivo;
         this.disciplina = disciplina;
-        this.professorResponsavel = prof;
         this.alunosMatriculados = new ArrayList<>();
     }
 
     public void adicionarAluno(Aluno a) {
-        alunosMatriculados.add(a);
+        if(!alunosMatriculados.contains(a)) {
+            alunosMatriculados.add(a);
+        }
     }
 
-    @Override
-    public String toString() {
-        return "Turma " + codigoTurma + " - " + disciplina.getNome();
+    public void setProfessorResponsavel(Professor p) {
+        this.professorResponsavel = p;
     }
+
+    public void listarTurma() {
+        String nomeProf = (professorResponsavel != null) ? professorResponsavel.getNome() : "Sem Professor";
+        System.out.println("TURMA " + codigoTurma + " | Disc: " + disciplina.getNome() + " | Prof: " + nomeProf);
+        System.out.println("   Alunos (" + alunosMatriculados.size() + "):");
+        for(Aluno a : alunosMatriculados) {
+            System.out.println("   -> " + a.getNome() + " (" + a.getMatricula() + ")");
+        }
+    }
+
+    public String getCodigoTurma() { return codigoTurma; }
+    public Disciplina getDisciplina() { return disciplina; }
+    public Professor getProfessorResponsavel() { return professorResponsavel; }
 }

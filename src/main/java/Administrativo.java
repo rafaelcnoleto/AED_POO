@@ -1,4 +1,3 @@
-// Arquivo: Administrativo.java
 public class Administrativo extends Pessoa {
     private String cargo;
     private String usuario;
@@ -11,24 +10,12 @@ public class Administrativo extends Pessoa {
         this.senha = senha;
     }
 
-    public void cadastrarAluno(Aluno a) {
-        BaseDeDadosMemoria.getInstancia().salvar(a);
+    public boolean autenticar(String user, String pass) {
+        return this.usuario.equals(user) && this.senha.equals(pass);
     }
-
-    public void cadastrarProfessor(Professor p) {
-        BaseDeDadosMemoria.getInstancia().salvar(p);
-    }
-
-    public void criarTurma(Turma t) {
-        BaseDeDadosMemoria.getInstancia().salvar(t);
-    }
-
-    // --- Novos Getters para o Login ---
-    public String getUsuario() { return usuario; }
-    public String getSenha() { return senha; }
 
     @Override
     public void exibirDados() {
-        System.out.println("Admin: " + nome + " | Cargo: " + cargo);
+        System.out.println(">> STAFF: " + nome + " | Cargo: " + cargo);
     }
 }

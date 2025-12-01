@@ -12,5 +12,5 @@ public class Disciplina {
     public String getNome() { return nome; }
 
     @Override
-    public String toString() { return nome; }
+    public String toString() { return nome + " (" + codigo + ")"; }
 }
