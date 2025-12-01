@@ -1,41 +1,36 @@
+// Arquivo: Professor.java
 import java.util.ArrayList;
 import java.util.List;
 
 public class Professor extends Pessoa {
-    private static int contadorProf = 1;
+    private static int contadorProf = 100;
 
     private String matriculaFuncional;
     private String titulacao;
     private List<Turma> turmasMinistradas;
 
-    public Professor(String nome, String cpf, String email, String titulacao) {
+    public Professor(String nome, String cpf, String email, String titulacao) throws ValidacaoException {
         super(nome, cpf, email);
-        this.titulacao = titulacao;
-        this.matriculaFuncional = "PROF-" + String.format("%03d", contadorProf++);
-        this.turmasMinistradas = new ArrayList<>();
-    }
+        if(titulacao.isEmpty()) throw new ValidacaoException("Titulação obrigatória.");
 
-    // Construtor auxiliar para login simulado
-    public Professor(String matriculaFuncional, String nome, String email, String titulacao, boolean isLogin) {
-        super(nome, "000", email);
-        this.matriculaFuncional = matriculaFuncional;
         this.titulacao = titulacao;
+        this.matriculaFuncional = "DOC-" + (++contadorProf);
         this.turmasMinistradas = new ArrayList<>();
     }
 
     public void adicionarTurma(Turma t) {
-        this.turmasMinistradas.add(t);
+        if(!turmasMinistradas.contains(t)) {
+            this.turmasMinistradas.add(t);
+        }
+    }
+
+    public void removerTurma(Turma t) {
+        this.turmasMinistradas.remove(t);
     }
 
     @Override
     public void exibirDados() {
-        System.out.println(">> PROFESSOR: " + nome + " (" + matriculaFuncional + ") | Titulação: " + titulacao);
-        if(!turmasMinistradas.isEmpty()){
-            System.out.println("   Ministrando as turmas:");
-            for(Turma t : turmasMinistradas) {
-                System.out.println("   - " + t.getCodigoTurma() + " (" + t.getDisciplina().getNome() + ")");
-            }
-        }
+        System.out.println("PROFESSOR | ID: " + matriculaFuncional + " | Nome: " + nome + " | Titulação: " + titulacao);
     }
 
     public String getMatriculaFuncional() { return matriculaFuncional; }

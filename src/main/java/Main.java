@@ -1,279 +1,292 @@
-import java.util.Scanner;
+// Arquivo: Main.java
 import java.util.List;
 
 public class Main {
-    private static Scanner scanner = new Scanner(System.in);
     private static BaseDeDados db = BaseDeDados.getInstancia();
     private static Pessoa usuarioLogado = null;
 
     public static void main(String[] args) {
-        System.out.println("=== SISTEMA ACADÊMICO SOL (CLI) ===");
+        System.out.println("=== SISTEMA ACADÊMICO SOL (Cenário Real) ===");
 
-        boolean rodando = true;
-        while (rodando) {
-            if (usuarioLogado == null) {
-                fazerLogin();
-            } else {
-                rodando = exibirMenuPrincipal();
+        while (true) {
+            try {
+                if (usuarioLogado == null) {
+                    telaLogin();
+                } else {
+                    telaPrincipal();
+                }
+            } catch (Exception e) {
+                System.out.println("\n!!! ERRO INESPERADO: " + e.getMessage());
+                usuarioLogado = null;
             }
         }
-        System.out.println("Sistema encerrado.");
     }
 
-    // --- LOGIN ---
-    private static void fazerLogin() {
-        System.out.println("\n--- TELA DE ACESSO ---");
+    // --- FLUXO DE LOGIN ---
+    private static void telaLogin() {
+        System.out.println("\n--- ACESSO RESTRITO ---");
         System.out.println("1. Administrativo");
         System.out.println("2. Professor");
         System.out.println("3. Aluno");
-        System.out.println("0. Sair");
-        System.out.print("Opção: ");
+        System.out.println("0. Encerrar");
 
-        int op = lerInteiro();
+        int op = ConsoleUtils.lerInteiro("Selecione o perfil");
         if (op == 0) System.exit(0);
 
-        switch (op) {
-            case 1: loginAdmin(); break;
-            case 2: loginProfessor(); break;
-            case 3: loginAluno(); break;
-            default: System.out.println("Inválido.");
+        try {
+            switch (op) {
+                case 1: loginAdmin(); break;
+                case 2: loginProf(); break;
+                case 3: loginAluno(); break;
+                default: System.out.println(">> Opção inválida.");
+            }
+        } catch (SistemaAcademicoException e) {
+            System.out.println("\n>> FALHA DE LOGIN: " + e.getMessage());
         }
     }
 
-    private static void loginAdmin() {
-        System.out.print("Usuário: ");
-        String user = scanner.nextLine();
-        System.out.print("Senha: ");
-        String pass = scanner.nextLine();
+    private static void loginAdmin() throws SistemaAcademicoException {
+        String user = ConsoleUtils.lerTexto("Usuário");
+        String pass = ConsoleUtils.lerTexto("Senha");
 
         for (Administrativo adm : db.getAdmins()) {
             if (adm.autenticar(user, pass)) {
                 usuarioLogado = adm;
-                System.out.println(">> Bem-vindo " + adm.getNome());
+                System.out.println("Bem-vindo, " + adm.getNome());
                 return;
             }
         }
-        System.out.println(">> Credenciais incorretas.");
+        throw new SistemaAcademicoException("Credenciais administrativas inválidas.");
     }
 
-    private static void loginProfessor() {
-        System.out.print("Matrícula ou Nome para Acesso: ");
-        String id = scanner.nextLine();
-        // Simulação de login
-        usuarioLogado = new Professor(id, id, "prof@sol.edu", "Visitante", true);
-        System.out.println(">> Acesso Professor: " + id);
+    private static void loginProf() throws SistemaAcademicoException {
+        String mat = ConsoleUtils.lerTexto("Matrícula Funcional (Ex: DOC-101)");
+        usuarioLogado = db.buscarProfessor(mat);
+        System.out.println("Bem-vindo Docente " + usuarioLogado.getNome());
     }
 
-    private static void loginAluno() {
-        System.out.print("Matrícula ou Nome para Acesso: ");
-        String id = scanner.nextLine();
-        // Simulação de login
-        usuarioLogado = new Aluno(id, id, "aluno@sol.edu", "Visitante", true);
-        System.out.println(">> Acesso Aluno: " + id);
+    private static void loginAluno() throws SistemaAcademicoException {
+        String mat = ConsoleUtils.lerTexto("Matrícula (Ex: 2025001)");
+        usuarioLogado = db.buscarAluno(mat);
+        System.out.println("Bem-vindo Aluno " + usuarioLogado.getNome());
     }
 
-    // --- MENUS PRINCIPAIS ---
-    private static boolean exibirMenuPrincipal() {
-        System.out.println("\n--- MENU (" + usuarioLogado.getClass().getSimpleName() + ") ---");
+    // --- MENUS ---
+    private static void telaPrincipal() {
+        System.out.println("\n--- MENU: " + usuarioLogado.getNome() + " ---");
+        if (usuarioLogado instanceof Administrativo) menuAdmin();
+        else menuGenerico();
+    }
 
-        if (usuarioLogado instanceof Administrativo) {
-            System.out.println("1. Cadastrar Novo Aluno");
-            System.out.println("2. Cadastrar Novo Professor");
-            System.out.println("3. Criar Turma");
-            System.out.println("4. Matricular Aluno em Turma");
-            System.out.println("5. Atribuir Professor a Turma");
-            System.out.println("6. Relatórios (Listar Tudo)");
-            System.out.println("7. Remover Aluno");
-        } else {
-            System.out.println("1. Consultar Turmas");
-            System.out.println("2. Meus Dados");
-        }
+    private static void menuAdmin() {
+        System.out.println("1. Cadastrar Aluno");
+        System.out.println("2. Cadastrar Professor");
+        System.out.println("3. Criar Turma");
+        System.out.println("4. Matricular Aluno em Turma");
+        System.out.println("5. Atribuir Professor");
+        System.out.println("6. Relatórios");
+        System.out.println("7. Deletar Aluno");
+        System.out.println("8. Remover Aluno de Turma");
+        System.out.println("9. Substituir Professor de Turma");
+        System.out.println("10. Cadastrar Disciplina (Novo)");
         System.out.println("0. Logout");
-        System.out.print("Escolha: ");
 
-        int op = lerInteiro();
-        if (op == 0) { usuarioLogado = null; return true; }
+        int op = ConsoleUtils.lerInteiro("Opção");
 
-        if (usuarioLogado instanceof Administrativo) {
-            tratarOpcaoAdmin(op);
-        } else {
-            tratarOpcaoGenerica(op);
-        }
-        return true;
-    }
-
-    private static void tratarOpcaoAdmin(int op) {
-        switch (op) {
-            case 1: cadastrarAluno(); break;
-            case 2: cadastrarProfessor(); break;
-            case 3: criarTurma(); break;
-            case 4: matricularAlunoEmTurma(); break;
-            case 5: atribuirProfessorTurma(); break;
-            case 6: gerarRelatorios(); break;
-            case 7: removerAluno(); break;
-            default: System.out.println("Opção inválida.");
+        try {
+            switch (op) {
+                case 1: cadastrarAluno(); break;
+                case 2: cadastrarProfessor(); break;
+                case 3: criarTurma(); break;
+                case 4: matricularAluno(); break;
+                case 5: atribuirProfessor(); break;
+                case 6: menuRelatorios(); break;
+                case 7: deletarAluno(); break;
+                case 8: removerAlunoDeTurma(); break;
+                case 9: substituirProfessorTurma(); break;
+                case 10: cadastrarDisciplina(); break; // Opção Nova
+                case 0: usuarioLogado = null; break;
+                default: System.out.println("Opção inválida.");
+            }
+        } catch (SistemaAcademicoException e) {
+            System.out.println("\n>> ERRO DE OPERAÇÃO: " + e.getMessage());
+            ConsoleUtils.pausar();
         }
     }
 
-    private static void tratarOpcaoGenerica(int op) {
-        switch (op) {
-            case 1: db.getTurmas().forEach(Turma::listarTurma); break;
-            case 2: usuarioLogado.exibirDados(); break;
-            default: System.out.println("Opção inválida.");
-        }
+    private static void menuGenerico() {
+        System.out.println("1. Minhas Turmas / Turmas Disponíveis");
+        System.out.println("2. Meus Dados");
+        System.out.println("0. Logout");
+
+        int op = ConsoleUtils.lerInteiro("Opção");
+        if (op == 0) { usuarioLogado = null; return; }
+
+        if (op == 1) db.getTurmas().forEach(Turma::listarDetalhes);
+        else if (op == 2) usuarioLogado.exibirDados();
     }
 
-    // --- FUNCIONALIDADES DO ADMIN ---
+    // --- RELATÓRIOS ---
+    private static void menuRelatorios() {
+        System.out.println("\n=== RELATÓRIOS ===");
+        System.out.println("1. Listar Alunos");
+        System.out.println("2. Listar Professores");
+        System.out.println("3. Listar Turmas");
+        System.out.println("4. Relatório Geral");
+        System.out.println("0. Voltar");
 
-    private static void cadastrarAluno() {
-        System.out.println("\n-- CADASTRO DE ALUNO --");
-        System.out.print("Nome: "); String nome = scanner.nextLine();
-        System.out.print("CPF: "); String cpf = scanner.nextLine();
-        System.out.print("Curso: "); String curso = scanner.nextLine();
+        int op = ConsoleUtils.lerInteiro("Opção");
+        String sep = "----------------------------------------------------------------------";
 
-        Aluno a = new Aluno(nome, cpf, nome.toLowerCase()+"@sol.edu", curso);
+        switch(op) {
+            case 1:
+                db.getAlunos().forEach(a -> { a.exibirDados(); System.out.println(sep); }); break;
+            case 2:
+                db.getProfessores().forEach(p -> { p.exibirDados(); System.out.println(sep); }); break;
+            case 3:
+                db.getTurmas().forEach(t -> { t.listarDetalhes(); System.out.println(sep); }); break;
+            case 4:
+                System.out.println("ALUNOS (" + db.getAlunos().size() + "):");
+                db.getAlunos().forEach(a -> { a.exibirDados(); System.out.println(sep); });
+                System.out.println("\nPROFESSORES (" + db.getProfessores().size() + "):");
+                db.getProfessores().forEach(p -> { p.exibirDados(); System.out.println(sep); });
+                System.out.println("\nTURMAS (" + db.getTurmas().size() + "):");
+                db.getTurmas().forEach(t -> { t.listarDetalhes(); System.out.println(sep); });
+                break;
+            case 0: return;
+            default: System.out.println("Inválido.");
+        }
+        ConsoleUtils.pausar();
+    }
+
+    // --- CONTROLLERS ---
+
+    private static void cadastrarAluno() throws SistemaAcademicoException {
+        System.out.println("\n-- NOVO ALUNO --");
+        String nome = ConsoleUtils.lerTexto("Nome Completo");
+        String cpf = ConsoleUtils.lerTexto("CPF (apenas números)");
+
+        System.out.println("Selecione o Curso:");
+        for(Curso c : db.getCursos()) {
+            System.out.println(c.toString());
+        }
+        int idCurso = ConsoleUtils.lerInteiro("ID do Curso");
+        Curso cursoSelecionado = db.buscarCurso(idCurso);
+
+        Aluno a = new Aluno(nome, cpf, nome.toLowerCase().split(" ")[0] + "@sol.edu", cursoSelecionado);
         db.adicionarAluno(a);
-
-        System.out.println(">> Aluno cadastrado com Sucesso!");
-        System.out.println(">> MATRÍCULA GERADA: " + a.getMatricula());
+        System.out.println(">> Sucesso! Matrícula gerada: " + a.getMatricula());
     }
 
-    private static void cadastrarProfessor() {
-        System.out.println("\n-- CADASTRO DE PROFESSOR --");
-        System.out.print("Nome: "); String nome = scanner.nextLine();
-        System.out.print("CPF: "); String cpf = scanner.nextLine();
-        System.out.print("Titulação: "); String tit = scanner.nextLine();
+    private static void cadastrarProfessor() throws SistemaAcademicoException {
+        System.out.println("\n-- NOVO PROFESSOR --");
+        String nome = ConsoleUtils.lerTexto("Nome Completo");
+        String cpf = ConsoleUtils.lerTexto("CPF");
+        String titulo = ConsoleUtils.lerTexto("Titulação");
 
-        Professor p = new Professor(nome, cpf, nome.toLowerCase()+"@sol.edu", tit);
+        Professor p = new Professor(nome, cpf, "docente@sol.edu", titulo);
         db.adicionarProfessor(p);
-
-        System.out.println(">> Professor cadastrado com Sucesso!");
-        System.out.println(">> ID FUNCIONAL: " + p.getMatriculaFuncional());
+        System.out.println(">> Sucesso! ID Funcional: " + p.getMatriculaFuncional());
     }
 
-    private static void criarTurma() {
-        if (db.getDisciplinas().isEmpty()) {
-            System.out.println(">> Erro: Nenhuma disciplina cadastrada.");
-            return;
+    private static void cadastrarDisciplina() throws SistemaAcademicoException {
+        System.out.println("\n-- NOVA DISCIPLINA --");
+        System.out.println("Selecione o Curso para adicionar a disciplina:");
+        for(Curso c : db.getCursos()) {
+            System.out.println(c.toString());
         }
+        int idCurso = ConsoleUtils.lerInteiro("ID do Curso");
+
+        // Verifica se curso existe
+        db.buscarCurso(idCurso);
+
+        String nome = ConsoleUtils.lerTexto("Nome da Disciplina");
+        String codigo = ConsoleUtils.lerTexto("Código (ex: MED05)");
+        int ch = ConsoleUtils.lerInteiro("Carga Horária");
+
+        // Gera ID simples baseado no tamanho da lista global (apenas para exemplo)
+        int novoId = db.getDisciplinas().size() + 100;
+        Disciplina d = new Disciplina(novoId, nome, codigo, ch);
+
+        db.adicionarDisciplinaEmCurso(idCurso, d);
+        System.out.println(">> Disciplina cadastrada com sucesso!");
+    }
+
+    private static void criarTurma() throws SistemaAcademicoException {
         System.out.println("\n-- NOVA TURMA --");
-        listarDisciplinas();
-        System.out.print("ID da Disciplina: ");
-        int idx = lerInteiro();
-
-        if (idx >= 0 && idx < db.getDisciplinas().size()) {
-            System.out.print("Código da Turma (ex: 2025-A): ");
-            String cod = scanner.nextLine();
-            Turma t = new Turma(cod, 2025, db.getDisciplinas().get(idx));
-            db.adicionarTurma(t);
-            System.out.println(">> Turma criada!");
+        System.out.println("Selecione o Curso da Turma:");
+        for(Curso c : db.getCursos()) {
+            System.out.println(c.toString());
         }
+        int idCurso = ConsoleUtils.lerInteiro("ID do Curso");
+        Curso curso = db.buscarCurso(idCurso);
+
+        System.out.println("Selecione a Disciplina de " + curso.getNome() + ":");
+        List<Disciplina> grade = curso.getGrade();
+        if(grade.isEmpty()) throw new RegraNegocioException("Curso sem disciplinas cadastradas.");
+
+        for(Disciplina d : grade) {
+            System.out.println(d.toString());
+        }
+
+        int idDisc = ConsoleUtils.lerInteiro("ID da Disciplina");
+        Disciplina disciplinaSelecionada = grade.stream()
+                .filter(d -> d.getId() == idDisc)
+                .findFirst()
+                .orElseThrow(() -> new ValidacaoException("ID de disciplina inválido para este curso."));
+
+        String cod = ConsoleUtils.lerTexto("Código da Turma (ex: T01-2025)");
+        Turma t = new Turma(cod, 2025, disciplinaSelecionada);
+        db.adicionarTurma(t);
+        System.out.println(">> Turma criada.");
     }
 
-    private static void matricularAlunoEmTurma() {
-        if (db.getAlunos().isEmpty() || db.getTurmas().isEmpty()) {
-            System.out.println(">> Erro: Precisa haver alunos e turmas cadastrados.");
-            return;
-        }
-        System.out.println("\n-- MATRICULAR ALUNO EM TURMA --");
+    private static void matricularAluno() throws SistemaAcademicoException {
+        System.out.println("\n-- MATRÍCULA --");
+        String mat = ConsoleUtils.lerTexto("Matrícula do Aluno");
+        Aluno a = db.buscarAluno(mat);
 
-        // 1. Selecionar Aluno
-        System.out.println("Selecione o Aluno:");
-        List<Aluno> alunos = db.getAlunos();
-        for (int i = 0; i < alunos.size(); i++) {
-            System.out.println("[" + i + "] " + alunos.get(i).getNome() + " (Mat: " + alunos.get(i).getMatricula() + ")");
-        }
-        System.out.print("Índice do Aluno: ");
-        int idxAluno = lerInteiro();
+        String codT = ConsoleUtils.lerTexto("Código da Turma");
+        Turma t = db.buscarTurma(codT);
 
-        // 2. Selecionar Turma
-        System.out.println("Selecione a Turma:");
-        List<Turma> turmas = db.getTurmas();
-        for (int i = 0; i < turmas.size(); i++) {
-            System.out.println("[" + i + "] Turma " + turmas.get(i).getCodigoTurma() + " - " + turmas.get(i).getDisciplina().getNome());
-        }
-        System.out.print("Índice da Turma: ");
-        int idxTurma = lerInteiro();
-
-        if (idxAluno >= 0 && idxAluno < alunos.size() && idxTurma >= 0 && idxTurma < turmas.size()) {
-            Turma t = turmas.get(idxTurma);
-            Aluno a = alunos.get(idxAluno);
-
-            t.adicionarAluno(a);
-            System.out.println(">> Sucesso: " + a.getNome() + " matriculado na turma " + t.getCodigoTurma());
-        } else {
-            System.out.println(">> Índices inválidos.");
-        }
+        t.adicionarAluno(a);
+        System.out.println(">> Aluno matriculado com sucesso.");
     }
 
-    private static void atribuirProfessorTurma() {
-        if (db.getProfessores().isEmpty() || db.getTurmas().isEmpty()) {
-            System.out.println(">> Erro: Precisa haver professores e turmas cadastrados.");
-            return;
-        }
-        System.out.println("\n-- ATRIBUIR PROFESSOR --");
+    private static void atribuirProfessor() throws SistemaAcademicoException {
+        System.out.println("\n-- ATRIBUIÇÃO --");
+        String idProf = ConsoleUtils.lerTexto("ID Funcional Professor");
+        Professor p = db.buscarProfessor(idProf);
 
-        // 1. Selecionar Professor
-        System.out.println("Selecione o Professor:");
-        List<Professor> profs = db.getProfessores();
-        for (int i = 0; i < profs.size(); i++) {
-            System.out.println("[" + i + "] " + profs.get(i).getNome());
-        }
-        System.out.print("Índice do Professor: ");
-        int idxProf = lerInteiro();
+        String codT = ConsoleUtils.lerTexto("Código da Turma");
+        Turma t = db.buscarTurma(codT);
 
-        // 2. Selecionar Turma
-        System.out.println("Selecione a Turma:");
-        List<Turma> turmas = db.getTurmas();
-        for (int i = 0; i < turmas.size(); i++) {
-            Turma t = turmas.get(i);
-            String atual = (t.getProfessorResponsavel() != null) ? t.getProfessorResponsavel().getNome() : "VAGO";
-            System.out.println("[" + i + "] " + t.getCodigoTurma() + " (Atual: " + atual + ")");
-        }
-        System.out.print("Índice da Turma: ");
-        int idxTurma = lerInteiro();
+        Professor antigo = t.getProfessorResponsavel();
+        if (antigo != null) antigo.removerTurma(t);
 
-        if (idxProf >= 0 && idxProf < profs.size() && idxTurma >= 0 && idxTurma < turmas.size()) {
-            Turma t = turmas.get(idxTurma);
-            Professor p = profs.get(idxProf);
-
-            t.setProfessorResponsavel(p); // Vincula na Turma
-            p.adicionarTurma(t);          // Vincula no Professor
-
-            System.out.println(">> Sucesso: Professor " + p.getNome() + " atribuído à turma " + t.getCodigoTurma());
-        } else {
-            System.out.println(">> Índices inválidos.");
-        }
+        t.setProfessorResponsavel(p);
+        p.adicionarTurma(t);
+        System.out.println(">> Professor atribuído.");
     }
 
-    private static void gerarRelatorios() {
-        System.out.println("\n--- RELATÓRIO GERAL ---");
-        System.out.println("\n> ALUNOS:");
-        db.getAlunos().forEach(Pessoa::exibirDados);
-
-        System.out.println("\n> PROFESSORES:");
-        db.getProfessores().forEach(Pessoa::exibirDados);
-
-        System.out.println("\n> TURMAS:");
-        db.getTurmas().forEach(Turma::listarTurma);
-    }
-
-    private static void removerAluno() {
-        System.out.print("Digite a matrícula para remover: ");
-        String mat = scanner.nextLine();
+    private static void deletarAluno() throws SistemaAcademicoException {
+        String mat = ConsoleUtils.lerTexto("Matrícula para deletar");
         db.removerAluno(mat);
-        System.out.println(">> Processo finalizado.");
+        System.out.println(">> Registro deletado do sistema.");
     }
 
-    private static void listarDisciplinas() {
-        List<Disciplina> lista = db.getDisciplinas();
-        for(int i=0; i<lista.size(); i++) {
-            System.out.println("["+i+"] " + lista.get(i));
-        }
+    private static void removerAlunoDeTurma() throws SistemaAcademicoException {
+        String codT = ConsoleUtils.lerTexto("Código da Turma");
+        Turma t = db.buscarTurma(codT);
+
+        String mat = ConsoleUtils.lerTexto("Matrícula do Aluno");
+        Aluno a = db.buscarAluno(mat);
+
+        t.removerAluno(a);
+        System.out.println(">> Aluno removido da turma.");
     }
 
-    private static int lerInteiro() {
-        try { return Integer.parseInt(scanner.nextLine()); }
-        catch (Exception e) { return -1; }
+    private static void substituirProfessorTurma() throws SistemaAcademicoException {
+        atribuirProfessor();
     }
 }

@@ -1,32 +1,23 @@
+// Arquivo: Aluno.java
 public class Aluno extends Pessoa {
-    // Contador estático para gerar matrículas (ex: 2025001...)
-    private static int contadorMatricula = 1;
+    private static int contadorMatricula = 2025000;
 
     private String matricula;
-    private String nomeCurso;
+    private Curso curso; // Associação direta com a classe Curso
 
-    public Aluno(String nome, String cpf, String email, String nomeCurso) {
+    public Aluno(String nome, String cpf, String email, Curso curso) throws ValidacaoException {
         super(nome, cpf, email);
-        this.nomeCurso = nomeCurso;
-        this.matricula = gerarNovaMatricula();
-    }
+        if(curso == null) throw new ValidacaoException("O aluno deve estar vinculado a um curso.");
 
-    // Construtor auxiliar para login simulado
-    public Aluno(String matricula, String nome, String email, String nomeCurso, boolean isLogin) {
-        super(nome, "000", email);
-        this.matricula = matricula;
-        this.nomeCurso = nomeCurso;
-    }
-
-    private String gerarNovaMatricula() {
-        int ano = 2025;
-        return String.format("%d%03d", ano, contadorMatricula++);
+        this.curso = curso;
+        this.matricula = String.valueOf(++contadorMatricula);
     }
 
     @Override
     public void exibirDados() {
-        System.out.println(">> ALUNO: " + nome + " | Matrícula: " + matricula + " | Curso: " + nomeCurso);
+        System.out.println("ALUNO | Mat: " + matricula + " | Nome: " + nome + " | Curso: " + curso.getNome());
     }
 
     public String getMatricula() { return matricula; }
+    public Curso getCurso() { return curso; }
 }
